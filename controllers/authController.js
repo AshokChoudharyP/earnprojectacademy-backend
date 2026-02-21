@@ -78,13 +78,13 @@ exports.sendOtp = async (req, res) => {
     await Otp.deleteMany({ email });
 
     await Otp.create({
-      name,
-      email,
-      password,
-      mobile,
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+  name: req.body.name,
+  email: req.body.email,
+  password: req.body.password,
+  mobile: req.body.mobile,   // ✅ MUST BE HERE
+  otp,
+  expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+});
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
