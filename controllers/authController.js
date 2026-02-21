@@ -94,13 +94,17 @@ exports.sendOtp = async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+       tls: {
+    rejectUnauthorized: false
+  }
     });
+     await transporter.verify();
 
     await transporter.sendMail({
       from: `"EarnProjectAcademy" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your OTP",
-      html: `<h1>${otp}</h1>`,
+      html: `<h1>Your OTP is ${otp}</h1>`,
     });
 
     res.json({ message: "OTP sent successfully" });
