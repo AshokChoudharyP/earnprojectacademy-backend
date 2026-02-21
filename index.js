@@ -23,6 +23,7 @@ const profileRoutes = require("./routes/profileRoutes");
 connectDB();
 
 const app = express();
+app.set("trust proxy", 1); // ✅ Add this
 
 const morgan = require("morgan");
 const logger = require("./utils/logger");
