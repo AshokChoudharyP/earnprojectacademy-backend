@@ -89,7 +89,7 @@ exports.sendOtp = async (req, res) => {
 });
 
      await resend.emails.send({
-  from: "EarnProjectAcademy <onboarding@resend.dev>",
+  from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
   to: req.body.email,
   subject: "Your OTP Code",
   html: `<h2>Your OTP is ${otp}</h2>
