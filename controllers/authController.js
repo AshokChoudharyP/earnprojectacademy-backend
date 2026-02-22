@@ -2,9 +2,11 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const otpStore = {}; // TEMP in-memory store for OTPs (later use DB or Redis)
-const nodemailer = require("nodemailer");
+const otpStore = {}; // TEMP in-memory store for OTPs (later use DB or Redis);
 const Otp = require("../models/Otp");
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * REGISTER
@@ -86,23 +88,13 @@ exports.sendOtp = async (req, res) => {
   expiresAt: new Date(Date.now() + 5 * 60 * 1000)
 });
 
-   const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_LOGIN,
-    pass: process.env.SMTP_PASSWORD,
-  },
-    });
-     await transporter.verify();
-
-    await transporter.sendMail({
-      from: `"EarnProjectAcademy" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your OTP",
-      html: `<h1>Your OTP is ${otp}</h1>`,
-    });
+     await resend.emails.send({
+  from: "EarnProjectAcademy <onboarding@resend.dev>",
+  to: req.body.email,
+  subject: "Your OTP Code",
+  html: `<h2>Your OTP is ${otp}</h2>
+         <p>This OTP is valid for 5 minutes.</p>`
+});
 
     res.json({ message: "OTP sent successfully" });
 
