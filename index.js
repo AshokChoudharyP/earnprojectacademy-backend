@@ -43,26 +43,20 @@ const limiter = rateLimit({
   message: "Too many requests. Please try again later.",
 });
 
-
-
-
-// 🔹 Middleware to read JSON body
-app.use(express.json());
-
 // CORS Middleware
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:3002",
-
+      "http://localhost:3000", // local dev
+      "https://earnprojectacademy-frontend.vercel.app" // production frontend
     ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   })
 );
+
+// 🔹 Middleware to read JSON body
+app.use(express.json());
 
 // HEALTH CHECK (DEPLOYMENT REQUIRED)
 app.get("/health", (req, res) => {
