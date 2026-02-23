@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const otpStore = {}; // TEMP in-memory store for OTPs (later use DB or Redis);
 const Otp = require("../models/Otp");
 const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
