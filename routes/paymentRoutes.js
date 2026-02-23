@@ -1,11 +1,11 @@
 const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
-const sendEmail = require("../utils/sendEmail");
+
 const paymentSuccessTemplate = require("../templates/paymentSuccess");
 const User = require("../models/User");
 const Course = require("../models/Course");
-
+const { sendPaymentEmail } = require("../utils/resendMailer");
 const { protect } = require("../middleware/authMiddleware");
 const razorpay = require("../config/razorpay");
 const Enrollment = require("../models/Enrollment");
@@ -106,55 +106,23 @@ router.post("/verify", protect, async (req, res) => {
 
     await enrollment.save();
 
-    const transporter = require("../config/mailer");
+  const { sendPaymentEmail } = require("../utils/resendMailer");
 const User = require("../models/User");
 
 const user = await User.findById(enrollment.user);
 const course = await Course.findById(enrollment.course);
 
 try {
-  await sendEmail({
+  await sendPaymentEmail({
     to: user.email,
-    subject: "Payment Successful – Welcome to EarnProjectAcademy 🎉",
-    html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>🎉 Payment Successful</h2>
-
-        <p>Hi <strong>${user.name}</strong>,</p>
-
-        <p>Your payment has been successfully received.</p>
-
-        <p>
-          <strong>Course:</strong> ${course.title}
-        </p>
-
-        <p>
-          ✅ Your dashboard is now unlocked <br/>
-          ✅ You can start learning immediately
-        </p>
-
-        <a href="http://localhost:3000/dashboard"
-           style="
-             display:inline-block;
-             margin-top:16px;
-             padding:12px 18px;
-             background:#4f46e5;
-             color:#fff;
-             text-decoration:none;
-             border-radius:6px;
-           ">
-          Go to Dashboard
-        </a>
-
-        <p style="margin-top:24px;">
-          – EarnProjectAcademy Team
-        </p>
-      </div>
-    `,
+    userName: user.name,
+    courseTitle: course.title,
   });
 } catch (emailError) {
   console.error("❌ Email failed:", emailError.message);
 }
+
+
 
     res.status(200).json({
       message: "Payment verified successfully",
