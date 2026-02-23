@@ -236,37 +236,29 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save();
 
-   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    
     const { Resend } = require("resend");
-const resend = new Resend(process.env.RESEND_API_KEY);
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // ✉️ Email message
-    const message = `
-      You requested a password reset.
-
-      Click the link below:
-      ${resetUrl}
-
-      This link expires in 15 minutes.
-    `;
-
-   await resend.emails.send({
-  from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
-  to: email,
-  subject: "Reset Your Password",
-  html: `
-    <p>Click below to reset password:</p>
-    <a href="${resetURL}">Reset Password</a>
-  `,
-});
+    await resend.emails.send({
+      from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
+      to: email,
+      subject: "Reset Your Password",
+      html: `
+        <p>You requested a password reset.</p>
+        <p>Click below to reset password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+        <p>This link expires in 15 minutes.</p>
+      `,
+    });
 
     res.status(200).json({
       message: "Reset link sent to your email",
     });
 
   } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
