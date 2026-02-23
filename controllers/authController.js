@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const otpStore = {}; // TEMP in-memory store for OTPs (later use DB or Redis);
 const Otp = require("../models/Otp");
 const { Resend } = require("resend");
-const nodemailer = require("nodemailer");
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -238,14 +238,9 @@ exports.forgotPassword = async (req, res) => {
 
     const resetUrl = `http://localhost:3002/reset-password/${resetToken}`;
 
-    // ✉️ Setup transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    
+    const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
     // ✉️ Email message
     const message = `
@@ -257,12 +252,15 @@ exports.forgotPassword = async (req, res) => {
       This link expires in 15 minutes.
     `;
 
-    await transporter.sendMail({
-      from: `"EarnProjectAcademy" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "Password Reset Request",
-      text: message,
-    });
+   await resend.emails.send({
+  from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
+  to: email,
+  subject: "Reset Your Password",
+  html: `
+    <p>Click below to reset password:</p>
+    <a href="${resetURL}">Reset Password</a>
+  `,
+});
 
     res.status(200).json({
       message: "Reset link sent to your email",
