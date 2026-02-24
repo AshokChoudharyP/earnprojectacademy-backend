@@ -48,7 +48,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000", // local dev
-      "https://earnprojectacademy-frontend.vercel.app" // production frontend
+      "https://earnprojectacademy-frontend.vercel.app", // production frontend
+        "https://earnprojectacademy.com",
+         "https://www.earnprojectacademy.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
