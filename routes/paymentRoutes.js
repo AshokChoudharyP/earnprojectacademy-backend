@@ -13,6 +13,8 @@ const Enrollment = require("../models/Enrollment");
 console.log("KEY:", process.env.RAZORPAY_KEY_ID);
 console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
 
+
+
 /**
  * @route   POST /api/payments/create-order
  * @desc    Create Razorpay order
@@ -21,7 +23,8 @@ console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
 router.post("/create-order", protect, async (req, res) => {
   try {
     const { enrollmentId } = req.body;
-
+    console.log("Creating order for:", enrollmentId);
+    console.error("Payment verification failed:", error);
     if (!enrollmentId) {
       return res.status(400).json({ message: "Enrollment ID is required" });
     }

@@ -9,6 +9,7 @@ const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+
 /**
  * REGISTER
  */
@@ -155,7 +156,8 @@ exports.verifyOtpAndRegister = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+   console.log(`[LOGIN] Attempt: ${email}`);
+   console.error(`[LOGIN ERROR] ${error.message}`);
     // 1️⃣ Validate request body
     if (!email || !password) {
       return res.status(400).json({
