@@ -1,15 +1,30 @@
 require("dotenv").config();
+const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
+const morgan = require("morgan");
 
 const connectDB = require("./database");
+const logger = require("./utils/logger");
 
+// ============================
+// 🔹 SENTRY INIT (TOP)
+// ============================
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || "development",
+  tracesSampleRate: 1.0,
+});
 
-// ROUTES
+console.log("SENTRY_DSN:", process.env.SENTRY_DSN);
+
+// ============================
+// 🔹 ROUTES IMPORT
+// ============================
 const authRoutes = require("./routes/authRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
-const adminRoutes = require("./routes/adminRoutes")
+const adminRoutes = require("./routes/adminRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const enrollmentRoutes = require("./routes/enrollmentRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -20,15 +35,20 @@ const lessonRoutes = require("./routes/lessonRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 
+// ============================
+// 🔹 CONNECT DATABASE
+// ============================
 connectDB();
 
 const app = express();
-app.set("trust proxy", 1); // ✅ Add this
 
-const morgan = require("morgan");
-const logger = require("./utils/logger");
 
-// 🔽 STEP 4 — REQUEST LOGGING
+
+app.set("trust proxy", 1);
+
+// ============================
+// 🔹 REQUEST LOGGING
+// ============================
 app.use(
   morgan("combined", {
     stream: {
@@ -37,30 +57,41 @@ app.use(
   })
 );
 
+// ============================
+// 🔹 RATE LIMITER
+// ============================
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // max requests per IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: "Too many requests. Please try again later.",
 });
 
-// CORS Middleware
+app.use(limiter);
+
+// ============================
+// 🔹 CORS
+// ============================
 app.use(
   cors({
     origin: [
-      "http://localhost:3000", // local dev
-      "https://earnprojectacademy-frontend.vercel.app", // production frontend
-        "https://earnprojectacademy.com",
-         "https://www.earnprojectacademy.com"
+      "http://localhost:3000",
+      "https://earnprojectacademy-frontend.vercel.app",
+      "https://earnprojectacademy.com",
+      "https://www.earnprojectacademy.com",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    credentials: true,
   })
 );
 
-// 🔹 Middleware to read JSON body
+// ============================
+// 🔹 BODY PARSER
+// ============================
 app.use(express.json());
 
-// HEALTH CHECK (DEPLOYMENT REQUIRED)
+// ============================
+// 🔹 HEALTH CHECK
+// ============================
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -69,66 +100,44 @@ app.get("/health", (req, res) => {
   });
 });
 
-//RATE LIMIT HERE
-app.use(limiter);
+// ============================
+// 🔹 API ROUTES
+// ============================
 
-// 🔹 PUBLIC ROUTES
 app.use("/api/auth", authRoutes);
-
-// 🔐 AUTHENTICATED ROUTES
 app.use("/api/protected", protectedRoutes);
-
-// 👑 ADMIN ONLY ROUTES
 app.use("/api/admin", adminRoutes);
-
-// 📚 COURSE ROUTES
 app.use("/api/courses", courseRoutes);
-
-// 🎓 ENROLLMENT ROUTES
 app.use("/api/enrollments", enrollmentRoutes);
-
-// 🧾 Payment Routes
 app.use("/api/payments", paymentRoutes);
-
-// 📖 Content Routes
 app.use("/api/content", contentRoutes);
-
-// 🔹 COURSE CONTENT ROUTES (PAID ACCESS)
 app.use("/api/course-content", courseContentRoutes);
-
-
-// 🔹 ADMIN CONTENT ROUTES
 app.use("/api/admin/content", adminContentRoutes);
-
-// 🔹 ADMIN ANALYTICS ROUTES
 app.use("/api/admin/analytics", require("./routes/adminAnalyticsRoutes"));
-
-// 🔹 LESSON ROUTES
 app.use("/api/lessons", lessonRoutes);
-
-app.use("/api/announcements", require("./routes/announcementRoutes"));
-
-// 🔹 DASHBOARD ROUTES
-app.use("/api/dashboard", dashboardRoutes);
-
 app.use("/api/announcements", require("./routes/announcementRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/live-classes", require("./routes/liveClassRoutes"));
-
-
 app.use("/api/profile", profileRoutes);
 
-// 🔹 Health check
+// ============================
+// 🔹 TEST ROUTES (OPTIONAL)
+// ============================
 app.get("/", (req, res) => {
   res.send("EarnProjectAcademy Backend is running");
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log("server running on port 5000");
-});
 
+
+// ============================
+// 🔹 SENTRY ERROR HANDLER (AFTER ROUTES)
+// ============================
+Sentry.setupExpressErrorHandler(app);
+
+// ============================
+// 🔹 GLOBAL ERROR HANDLER (FINAL)
+// ============================
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
@@ -137,12 +146,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-// 🔽 STEP 5 — GLOBAL ERROR HANDLER
-app.use((err, req, res, next) => {
-  logger.error(err.message, { stack: err.stack });
-  res.status(500).json({ message: "Internal Server Error" });
+// ============================
+// 🔹 START SERVER (ALWAYS LAST)
+// ============================
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
+
 
 
 
