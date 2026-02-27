@@ -13,6 +13,7 @@
   "dependencies": {
     "@sentry/node": "^10.40.0",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",
     "dotenv": "^16.6.1",
@@ -25,6 +26,7 @@
     "nodemailer": "^8.0.1",
     "razorpay": "^2.9.6",
     "resend": "^6.9.2",
+    "response-time": "^2.3.4",
     "winston": "^3.19.0"
   },
   "devDependencies": {

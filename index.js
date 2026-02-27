@@ -2,6 +2,8 @@ require("dotenv").config();
 const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
+const responseTime = require("response-time");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
@@ -26,6 +28,7 @@ mongoose.set("debug", function (collectionName, method, query, doc) {
   }
 });
 console.log("SENTRY_DSN:", process.env.SENTRY_DSN);
+
 
 // ============================
 // 🔹 ROUTES IMPORT
@@ -64,7 +67,10 @@ app.use(
     },
   })
 );
-
+app.use((req, res, next) => {
+  res.set("Cache-Control", "public, max-age=600");
+  next();
+});
 // ============================
 // 🔹 RATE LIMITER
 // ============================
@@ -96,7 +102,8 @@ app.use(
 // 🔹 BODY PARSER
 // ============================
 app.use(express.json());
-
+app.use(compression());
+app.use(responseTime());
 // ============================
 // 🔹 HEALTH CHECK
 // ============================
