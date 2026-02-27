@@ -3,10 +3,11 @@ const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
+const mongoSanitize = require("express-mongo-sanitize");
 const responseTime = require("response-time");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
-
+const hpp = require("hpp");
 const connectDB = require("./database");
 const logger = require("./utils/logger");
 
@@ -52,7 +53,8 @@ const profileRoutes = require("./routes/profileRoutes");
 connectDB();
 
 const app = express();
-
+const helmet = require("helmet");
+app.use(helmet());
 
 
 app.set("trust proxy", 1);
@@ -104,6 +106,9 @@ app.use(
 app.use(express.json());
 app.use(compression());
 app.use(responseTime());
+app.use(mongoSanitize());
+app.use(hpp());
+app.disable("x-powered-by");
 // ============================
 // 🔹 HEALTH CHECK
 // ============================
