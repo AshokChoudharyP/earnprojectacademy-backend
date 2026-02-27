@@ -16,7 +16,15 @@ Sentry.init({
   environment: process.env.NODE_ENV || "development",
   tracesSampleRate: 1.0,
 });
+const mongoose = require("mongoose");
 
+mongoose.set("debug", function (collectionName, method, query, doc) {
+  const message = `MongoDB Query: ${collectionName}.${method}`;
+  
+  if (method === "find" || method === "findOne") {
+    console.log(message);
+  }
+});
 console.log("SENTRY_DSN:", process.env.SENTRY_DSN);
 
 // ============================
@@ -92,9 +100,19 @@ app.use(express.json());
 // ============================
 // 🔹 HEALTH CHECK
 // ============================
-app.get("/health", (req, res) => {
+app.get("/health", async (req, res) => {
+  const dbState = mongoose.connection.readyState;
+
+  const states = {
+    0: "Disconnected",
+    1: "Connected",
+    2: "Connecting",
+    3: "Disconnecting",
+  };
+
   res.status(200).json({
     status: "OK",
+    database: states[dbState],
     uptime: process.uptime(),
     timestamp: new Date(),
   });
@@ -154,7 +172,15 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+  Sentry.captureException(err);
+});
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  Sentry.captureException(err);
+});
 
 
 
