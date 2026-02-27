@@ -3,7 +3,7 @@ const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
-const mongoSanitize = require("express-mongo-sanitize");
+const sanitize = require("mongo-sanitize");
 const responseTime = require("response-time");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
@@ -106,13 +106,17 @@ app.use(
 app.use(express.json());
 app.use(compression());
 app.use(responseTime());
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  req.body = sanitize(req.body);
+  req.query = sanitize(req.query);
+  next();
+});
 app.use(hpp());
 app.disable("x-powered-by");
 // ============================
 // 🔹 HEALTH CHECK
 // ============================
-app.get("/health", async (req, res) => {
+app.get("/health", (req, res) => {
   const dbState = mongoose.connection.readyState;
 
   const states = {
@@ -124,7 +128,7 @@ app.get("/health", async (req, res) => {
 
   res.status(200).json({
     status: "OK",
-    database: states[dbState],
+    database: states[dbState] || "Unknown",
     uptime: process.uptime(),
     timestamp: new Date(),
   });
