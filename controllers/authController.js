@@ -156,8 +156,8 @@ exports.verifyOtpAndRegister = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-   console.log(`[LOGIN] Attempt: ${email}`);
-   console.error(`[LOGIN ERROR] ${error.message}`);
+    console.log(`[LOGIN] Attempt: ${email}`);
+
     // 1️⃣ Validate request body
     if (!email || !password) {
       return res.status(400).json({
@@ -189,7 +189,7 @@ exports.login = async (req, res) => {
     );
 
     // 5️⃣ Send response
-    res.status(200).json({
+    return res.status(200).json({
       token,
       user: {
         _id: user._id,
@@ -199,12 +199,12 @@ exports.login = async (req, res) => {
       },
     });
 
-  }catch (err) {
-  console.error("Login error:", err);
-  res.status(500).json({
-    message: "Server error during login"
-  });
-}
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({
+      message: "Server error during login",
+    });
+  }
 };
 
 /**
