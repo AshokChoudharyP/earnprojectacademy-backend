@@ -24,7 +24,7 @@ router.post("/create-order", protect, async (req, res) => {
   try {
     const { enrollmentId } = req.body;
     console.log("Creating order for:", enrollmentId);
-    console.error("Payment verification failed:", error);
+
     if (!enrollmentId) {
       return res.status(400).json({ message: "Enrollment ID is required" });
     }
@@ -47,18 +47,18 @@ router.post("/create-order", protect, async (req, res) => {
       receipt: `receipt_${enrollmentId}`,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
       key: process.env.RAZORPAY_KEY_ID,
     });
+
   } catch (error) {
-  console.error("🔥 ORDER CREATE ERROR:", error);
-  res.status(500).json({
-    message: error.message,
-    stack: error.stack,
-  });
+    console.error("🔥 ORDER CREATE ERROR:", error);
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 });
 
