@@ -185,7 +185,11 @@ Sentry.setupExpressErrorHandler(app);
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
-  res.status(500).json({
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  return res.status(500).json({
     message: "Something went wrong. Please try again later.",
   });
 });

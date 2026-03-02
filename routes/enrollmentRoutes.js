@@ -25,13 +25,11 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ message: "Course ID is required" });
     }
 
-    // 1️⃣ Check course exists
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // 2️⃣ Prevent duplicate enrollment
     const existingEnrollment = await Enrollment.findOne({
       user: req.user._id,
       course: courseId,
@@ -45,7 +43,6 @@ router.post("/", protect, async (req, res) => {
       });
     }
 
-    // 3️⃣ Create enrollment (NO PAYMENT YET)
     const enrollment = await Enrollment.create({
       user: req.user._id,
       course: courseId,
@@ -58,11 +55,12 @@ router.post("/", protect, async (req, res) => {
       paymentStatus: "UNPAID",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       enrollmentId: enrollment._id,
     });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
