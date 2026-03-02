@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
-
+const Coupon = require("../models/Coupon");
 const paymentSuccessTemplate = require("../templates/paymentSuccess");
 const User = require("../models/User");
 const Course = require("../models/Course");
@@ -22,11 +22,10 @@ console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
  */
 router.post("/create-order", protect, async (req, res) => {
   try {
-    const { enrollmentId } = req.body;
-    console.log("Creating order for:", enrollmentId);
+    const { enrollmentId, couponCode } = req.body;
 
     if (!enrollmentId) {
-      return res.status(400).json({ message: "Enrollment ID is required" });
+      return res.status(400).json({ message: "Enrollment ID required" });
     }
 
     const enrollment = await Enrollment.findById(enrollmentId).populate("course");
@@ -35,19 +34,30 @@ router.post("/create-order", protect, async (req, res) => {
       return res.status(404).json({ message: "Enrollment not found" });
     }
 
-    if (enrollment.paymentStatus === "PAID") {
-      return res.status(400).json({ message: "Payment already completed" });
+    let finalAmount = enrollment.course.price;
+
+    // Apply coupon if provided
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+
+      if (
+        coupon &&
+        coupon.isActive &&
+        (!coupon.expiresAt || coupon.expiresAt > new Date()) &&
+        coupon.usedCount < coupon.usageLimit
+      ) {
+        const discount = (finalAmount * coupon.discountPercent) / 100;
+        finalAmount = finalAmount - discount;
+      }
     }
 
-    const amount = enrollment.course.price * 100; // Razorpay uses paise
-
     const order = await razorpay.orders.create({
-      amount,
+      amount: finalAmount * 100,
       currency: "INR",
       receipt: `receipt_${enrollmentId}`,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
@@ -55,12 +65,12 @@ router.post("/create-order", protect, async (req, res) => {
     });
 
   } catch (error) {
-    console.error("🔥 ORDER CREATE ERROR:", error);
-    return res.status(500).json({
-      message: error.message,
-    });
+    console.error("ORDER CREATE ERROR:", error);
+    res.status(500).json({ message: "Payment failed" });
   }
 });
+  
+
 
 /**
  * @route   POST /api/payments/verify

@@ -27,6 +27,14 @@ const protect = async (req, res, next) => {
     req.user = user;
 
     next();
+
+    const enrollment = await Enrollment.findOne({ user: req.user.id });
+
+if (enrollment?.isBlocked) {
+  return res.status(403).json({
+    message: "Your access is blocked due to pending payment.",
+  });
+}
   } catch (error) {
     return res.status(401).json({
       message: "Not authorized, token failed",

@@ -32,7 +32,46 @@ const enrollmentSchema = new mongoose.Schema(
     },
 
     paymentId: String,
-  },
+
+    paymentPlan: {
+  type: String,
+  enum: ["FULL", "INSTALLMENT"],
+  default: "FULL",
+},
+
+totalAmount: {
+  type: Number,
+  default: 27000,
+},
+
+amountPaid: {
+  type: Number,
+  default: 0,
+},
+
+remainingAmount: {
+  type: Number,
+  default: 27000,
+},
+
+installmentStage: {
+  type: Number,
+  default: 0, // 0 = not started, 1 = seat paid, 2 = first paid, 3 = complete
+},
+
+nextDueDate: {
+  type: Date,
+},
+
+isBlocked: {
+  type: Boolean,
+  default: false,
+},
+
+couponApplied: {
+  type: String,
+},
+},
   { timestamps: true }
 );
 
