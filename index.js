@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./utils/paymentCron");
 const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
@@ -107,8 +108,16 @@ app.use(express.json());
 app.use(compression());
 app.use(responseTime());
 app.use((req, res, next) => {
-  req.body = sanitize(req.body);
-  req.query = sanitize(req.query);
+  if (req.body) {
+    req.body = sanitize(req.body);
+  }
+
+  if (req.query && typeof req.query === "object") {
+    Object.keys(req.query).forEach((key) => {
+      req.query[key] = sanitize(req.query[key]);
+    });
+  }
+
   next();
 });
 app.use(hpp());
