@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("./utils/paymentCron");
+const startPaymentCron = require("./utils/paymentCron");
 const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
@@ -201,7 +201,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
+startPaymentCron();
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
   Sentry.captureException(err);
