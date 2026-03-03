@@ -1,23 +1,19 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Enrollment = require("../models/Enrollment");
 
-// 🔐 Protect Routes Middleware
 const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Check if header exists and starts with Bearer
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Not authorized, no token" });
     }
 
-    // Extract token
     const token = authHeader.split(" ")[1];
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Find user (exclude password)
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -26,21 +22,24 @@ const protect = async (req, res, next) => {
 
     req.user = user;
 
-    next();
+    // ✅ MOVE BLOCK CHECK BEFORE next()
+    const enrollment = await Enrollment.findOne({ user: req.user._id });
 
-    const enrollment = await Enrollment.findOne({ user: req.user.id });
+    if (enrollment?.isBlocked) {
+      return res.status(403).json({
+        message: "Your access is blocked due to pending payment.",
+      });
+    }
 
-if (enrollment?.isBlocked) {
-  return res.status(403).json({
-    message: "Your access is blocked due to pending payment.",
-  });
-}
+    next(); // 👈 MUST BE LAST LINE
+
   } catch (error) {
     return res.status(401).json({
       message: "Not authorized, token failed",
     });
   }
 };
+
 
 // 🛡 Admin Role Middleware
 const isAdmin = (req, res, next) => {
