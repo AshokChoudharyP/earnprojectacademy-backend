@@ -96,7 +96,7 @@ router.post("/create-order", protect, async (req, res) => {
     const order = await razorpay.orders.create({
       amount: Math.round(finalAmount * 100), // convert to paise
       currency: "INR",
-      receipt: `receipt_${enrollmentId}_${Date.now()}`,
+      receipt: `inst_${enrollmentId.slice(-8)}_${Date.now().toString().slice(-6)}`,
     });
 
     return res.status(200).json({
@@ -289,7 +289,7 @@ router.post("/create-installment-order", protect, async (req, res) => {
     const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
-      receipt: `installment_${enrollmentId}_${Date.now()}`,
+      receipt: `inst_${enrollmentId.slice(-8)}_${Date.now().toString().slice(-6)}`,
     });
 
     return res.status(200).json({
