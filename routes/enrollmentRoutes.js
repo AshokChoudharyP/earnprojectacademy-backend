@@ -22,12 +22,14 @@ router.post("/", protect, async (req, res) => {
     } = req.body;
 
     if (!courseId) {
-      return res.status(400).json({ message: "Course ID is required" });
+      res.status(400).json({ message: "Course ID is required" });
+      return;
     }
 
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: "Course not found" });
+      res.status(404).json({ message: "Course not found" });
+      return;
     }
 
     const existingEnrollment = await Enrollment.findOne({
@@ -36,11 +38,12 @@ router.post("/", protect, async (req, res) => {
     });
 
     if (existingEnrollment) {
-      return res.status(400).json({
+      res.status(400).json({
         message: "Already enrolled in this course",
         enrollmentId: existingEnrollment._id,
         paymentStatus: existingEnrollment.paymentStatus,
       });
+      return;
     }
 
     const enrollment = await Enrollment.create({
@@ -55,15 +58,16 @@ router.post("/", protect, async (req, res) => {
       paymentStatus: "UNPAID",
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       enrollmentId: enrollment._id,
     });
+    return;
 
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
+    return;
   }
 });
-
 /**
  * @route   GET /api/enrollments/my
  * @desc    Get logged-in user's enrollments
@@ -76,8 +80,10 @@ router.get("/my", protect, async (req, res) => {
     }).populate("course", "title description price");
 
     res.status(200).json(enrollments);
+    return;
   } catch (error) {
     res.status(500).json({ message: error.message });
+return;
   }
 });
 
@@ -93,8 +99,10 @@ router.get("/", protect, isAdmin, async (req, res) => {
       .populate("course", "title price");
 
     res.status(200).json(enrollments);
+    return;
   } catch (error) {
     res.status(500).json({ message: error.message });
+    return;
   }
 });
 
