@@ -12,24 +12,15 @@ const { protect, isAdmin } = require("../middleware/authMiddleware");
  */
 router.post("/", protect, async (req, res) => {
   try {
-    const {
-      courseId,
-      education,
-      experience,
-      currentRole,
-      skills,
-      expectations,
-    } = req.body;
+    const { courseId, education, experience, currentRole, skills, expectations } = req.body;
 
     if (!courseId) {
-      res.status(400).json({ message: "Course ID is required" });
-      return;
+      return res.status(400).json({ message: "Course ID is required" });
     }
 
     const course = await Course.findById(courseId);
     if (!course) {
-      res.status(404).json({ message: "Course not found" });
-      return;
+      return res.status(404).json({ message: "Course not found" });
     }
 
     const existingEnrollment = await Enrollment.findOne({
@@ -38,12 +29,11 @@ router.post("/", protect, async (req, res) => {
     });
 
     if (existingEnrollment) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Already enrolled in this course",
         enrollmentId: existingEnrollment._id,
         paymentStatus: existingEnrollment.paymentStatus,
       });
-      return;
     }
 
     const enrollment = await Enrollment.create({
@@ -58,14 +48,12 @@ router.post("/", protect, async (req, res) => {
       paymentStatus: "UNPAID",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       enrollmentId: enrollment._id,
     });
-    return;
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
-    return;
+    return res.status(500).json({ message: error.message });
   }
 });
 /**
