@@ -3,8 +3,9 @@ const router = express.Router();
 const Coupon = require("../models/Coupon");
 const { protect, isAdmin } = require("../middleware/authMiddleware");
 
+
 // =====================================
-// 🔹 VALIDATE COUPON (Public - Used During Payment)
+// 🔹 VALIDATE COUPON (Used during payment)
 // =====================================
 router.post("/validate", async (req, res) => {
   try {
@@ -58,28 +59,91 @@ router.post("/validate", async (req, res) => {
   }
 });
 
+
 // =====================================
-// 🔹 CREATE COUPON (Admin Only)
+// 🔹 CREATE COUPON (Admin)
 // =====================================
 router.post("/", protect, isAdmin, async (req, res) => {
   try {
-    const coupon = await Coupon.create(req.body);
-    return res.status(201).json(coupon);
+
+    const coupon = await Coupon.create({
+      ...req.body,
+      createdBy: req.user._id
+    });
+
+    return res.status(201).json({
+      message: "Coupon created successfully",
+      coupon
+    });
+
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
 });
+
 
 // =====================================
 // 🔹 GET ALL COUPONS (Admin)
 // =====================================
 router.get("/", protect, isAdmin, async (req, res) => {
   try {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
+
+    const coupons = await Coupon.find()
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
     return res.status(200).json(coupons);
+
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
 });
+
+
+// =====================================
+// 🔹 UPDATE COUPON (Admin)
+// =====================================
+router.put("/:id", protect, isAdmin, async (req, res) => {
+  try {
+
+    const coupon = await Coupon.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+
+    return res.status(200).json(coupon);
+
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+
+// =====================================
+// 🔹 DELETE COUPON (Admin)
+// =====================================
+router.delete("/:id", protect, isAdmin, async (req, res) => {
+  try {
+
+    const coupon = await Coupon.findByIdAndDelete(req.params.id);
+
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+
+    return res.status(200).json({
+      message: "Coupon deleted successfully",
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

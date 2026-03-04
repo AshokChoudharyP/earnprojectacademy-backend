@@ -47,7 +47,7 @@ const adminContentRoutes = require("./routes/adminContentRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const profileRoutes = require("./routes/profileRoutes");
-
+const couponRoutes = require("./routes/couponRoutes");
 // ============================
 // 🔹 CONNECT DATABASE
 // ============================
@@ -150,7 +150,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/coupons", require("./routes/couponRoutes"));
+app.use("/api/coupons", couponRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/payments", paymentRoutes);
