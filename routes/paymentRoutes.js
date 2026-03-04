@@ -22,9 +22,11 @@ console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
  */
 router.post("/create-order", protect, async (req, res) => {
   try {
+     console.log("REQUEST BODY:", req.body);
     const { enrollmentId, couponCode } = req.body;
     const plan = req.body.plan?.toLowerCase();
     console.log("PLAN RECEIVED:", plan);
+    console.log("ENROLLMENT ID:", enrollmentId);
     if (!enrollmentId || !plan) {
       return res.status(400).json({ message: "Invalid request" });
     }
@@ -49,6 +51,7 @@ router.post("/create-order", protect, async (req, res) => {
     else {
       return res.status(400).json({ message: "Invalid plan selected" });
     }
+    console.log("FINAL AMOUNT:", finalAmount);
 
     // ==========================
     // 🔹 COUPON LOGIC (FULL ONLY)
@@ -99,6 +102,7 @@ router.post("/create-order", protect, async (req, res) => {
       currency: "INR",
       receipt: `inst_${enrollmentId.slice(-8)}_${Date.now().toString().slice(-6)}`,
     });
+    console.log("RAZORPAY ORDER AMOUNT:", order.amount);
 
     return res.status(200).json({
       orderId: order.id,
