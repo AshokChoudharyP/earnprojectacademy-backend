@@ -4,13 +4,13 @@ const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 const Enrollment = require("../models/Enrollment");
 const Module = require("../models/Module");
-
+const checkPaymentAccess = require("../middleware/paymentAccessMiddleware");
 /**
  * @route   GET /api/content/:courseId
  * @desc    Get course content (PAID students only)
  * @access  Private
  */
-router.get("/:courseId", protect, async (req, res) => {
+router.get("/:courseId", protect, checkPaymentAccess, async (req, res) => {
   try {
     const { courseId } = req.params;
 

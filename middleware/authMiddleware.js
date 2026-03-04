@@ -40,6 +40,23 @@ const protect = async (req, res, next) => {
   }
 };
 
+const checkPaymentAccess = async (req, res, next) => {
+
+  const enrollment = await Enrollment.findOne({
+    user: req.user._id
+  });
+
+  if (!enrollment) return next();
+
+  if (enrollment.isBlocked) {
+    return res.status(403).json({
+      message: "Access blocked due to pending payment"
+    });
+  }
+
+  next();
+};
+
 
 // 🛡 Admin Role Middleware
 const isAdmin = (req, res, next) => {

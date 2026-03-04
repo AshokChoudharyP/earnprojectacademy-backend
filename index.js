@@ -161,6 +161,7 @@ app.use("/api/admin/analytics", require("./routes/adminAnalyticsRoutes"));
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/announcements", require("./routes/announcementRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/admin", require("./routes/adminPaymentRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/live-classes", require("./routes/liveClassRoutes"));
 app.use("/api/profile", profileRoutes);

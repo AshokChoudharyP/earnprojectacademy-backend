@@ -4,9 +4,9 @@ const { protect } = require("../middleware/authMiddleware");
 const Enrollment = require("../models/Enrollment");
 const Announcement = require("../models/Announcement");
 const Lesson = require("../models/Lesson");
-
+const checkPaymentAccess = require("../middleware/paymentAccessMiddleware");
 // STUDENT DASHBOARD
-router.get("/student", protect, async (req, res) => {
+router.get("/student", protect, checkPaymentAccess, async (req, res) => {
   try {
     // Courses
     const enrollments = await Enrollment.find({ user: req.user._id })
