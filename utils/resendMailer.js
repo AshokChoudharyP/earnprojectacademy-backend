@@ -51,4 +51,29 @@ const sendPaymentEmail = async ({ to, userName, courseTitle }) => {
   }
 };
 
-module.exports = { sendPaymentEmail };
+async function sendPaymentReminderEmail({ to, userName, courseTitle, dueDate, amount }) {
+  const html = `
+  <h2>Payment Reminder</h2>
+  <p>Hello ${userName},</p>
+
+  <p>Your next installment payment is due soon.</p>
+
+  <b>Course:</b> ${courseTitle} <br/>
+  <b>Amount Due:</b> ₹${amount} <br/>
+  <b>Due Date:</b> ${new Date(dueDate).toDateString()}
+
+  <p>Please complete payment to avoid course access suspension.</p>
+
+  <br/>
+
+  <b>EarnProjectAcademy</b>
+  `;
+
+  await resend.emails.send({
+    from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
+    to,
+    subject: "Payment Reminder - EarnProjectAcademy",
+    html,
+  });
+}
+module.exports = { sendPaymentEmail, sendPaymentReminderEmail };

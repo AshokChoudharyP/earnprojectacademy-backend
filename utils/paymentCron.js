@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const Course = require("../models/Course");
-const { sendPaymentEmail } = require("./resendMailer");
+const { sendPaymentReminderEmail } = require("./resendMailer");
 
 const startPaymentCron = () => {
 
@@ -34,7 +34,6 @@ const startPaymentCron = () => {
 
       }
 
-
       // ===============================
       // 2️⃣ SEND REMINDER EMAILS
       // ===============================
@@ -42,32 +41,33 @@ const startPaymentCron = () => {
       const reminderDate = new Date();
       reminderDate.setDate(reminderDate.getDate() + 2);
 
-      const upcomingDue = await Enrollment.find({
+      const upcomingPayments = await Enrollment.find({
         paymentPlan: "INSTALLMENT",
         paymentStatus: { $ne: "PAID" },
         nextDueDate: { $lte: reminderDate },
-        isBlocked: false,
+        isBlocked: false
       });
 
-      for (let enrollment of upcomingDue) {
+      for (let enrollment of upcomingPayments) {
 
         const user = await User.findById(enrollment.user);
         const course = await Course.findById(enrollment.course);
 
         try {
 
-          await sendPaymentEmail({
+          await sendPaymentReminderEmail({
             to: user.email,
             userName: user.name,
             courseTitle: course.title,
-            reminder: true
+            dueDate: enrollment.nextDueDate,
+            amount: enrollment.remainingAmount
           });
 
-          console.log("📧 Reminder email sent:", user.email);
+          console.log("📧 Reminder email sent to:", user.email);
 
         } catch (emailError) {
 
-          console.error("Email failed:", emailError.message);
+          console.error("❌ Email failed:", emailError.message);
 
         }
 
