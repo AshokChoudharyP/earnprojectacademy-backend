@@ -126,10 +126,10 @@ router.post("/verify", protect, async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
       enrollmentId,
-      plan,
       couponCode,
     } = req.body;
-
+    const plan = req.body.plan?.toLowerCase();
+    console.log("VERIFY PLAN:", plan);
     if (
       !razorpay_order_id ||
       !razorpay_payment_id ||
@@ -165,52 +165,48 @@ router.post("/verify", protect, async (req, res) => {
     // ======================================
     // 💰 FULL PAYMENT LOGIC
     // ======================================
-    if (plan === "full") {
+   if (plan === "full") {
 
-      enrollment.paymentPlan = "FULL";
-      enrollment.totalPaid = coursePrice;
-      enrollment.remainingAmount = 0;
-      enrollment.paymentStatus = "PAID";
-      enrollment.status = "ACTIVE";
-      enrollment.installmentStage = 3;
-      enrollment.isBlocked = false;
+  enrollment.paymentPlan = "FULL";
+  enrollment.totalPaid = coursePrice;
+  enrollment.remainingAmount = 0;
+  enrollment.paymentStatus = "PAID";
+  enrollment.status = "ACTIVE";
+  enrollment.installmentStage = 3;
+  enrollment.isBlocked = false;
 
-      // Handle coupon increment
-      if (couponCode) {
-        const coupon = await Coupon.findOne({
-          code: couponCode.toUpperCase(),
-        });
+  if (couponCode) {
+    const coupon = await Coupon.findOne({
+      code: couponCode.toUpperCase(),
+    });
 
-        if (coupon) {
-          coupon.usedCount += 1;
-          await coupon.save();
+    if (coupon) {
+      coupon.usedCount += 1;
+      await coupon.save();
 
-          enrollment.appliedCoupon = coupon.code;
-          enrollment.discountPercent = coupon.discountPercent;
-        }
-      }
+      enrollment.appliedCoupon = coupon.code;
+      enrollment.discountPercent = coupon.discountPercent;
     }
+  }
 
-    // ======================================
-    // 💳 INSTALLMENT (ADMISSION) LOGIC
-    // ======================================
-    if (plan === "admission") {
+} else if (plan === "admission") {
 
-      enrollment.paymentPlan = "INSTALLMENT";
-      enrollment.totalPaid = 4999;
-      enrollment.remainingAmount = coursePrice - 4999;
-      enrollment.paymentStatus = "PARTIAL";
-      enrollment.status = "ACTIVE";
-      enrollment.installmentStage = 1;
+  enrollment.paymentPlan = "INSTALLMENT";
+  enrollment.totalPaid = 4999;
+  enrollment.remainingAmount = coursePrice - 4999;
+  enrollment.paymentStatus = "PARTIAL";
+  enrollment.status = "ACTIVE";
+  enrollment.installmentStage = 1;
 
-      // Next due date = 30 days from now
-      const nextDue = new Date();
-      nextDue.setDate(nextDue.getDate() + 30);
-      enrollment.nextDueDate = nextDue;
+  const nextDue = new Date();
+  nextDue.setDate(nextDue.getDate() + 30);
+  enrollment.nextDueDate = nextDue;
 
-      enrollment.isBlocked = false;
-    }
+  enrollment.isBlocked = false;
 
+} else {
+  return res.status(400).json({ message: "Invalid payment plan" });
+}
     enrollment.paymentId = razorpay_payment_id;
 
     await enrollment.save();
