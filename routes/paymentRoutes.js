@@ -365,4 +365,38 @@ router.post("/verify-installment", protect, async (req, res) => {
     return res.status(500).json({ message: "Installment verification failed" });
   }
 });
+
+router.get("/status/:enrollmentId", protect, async (req, res) => {
+  try {
+    const { enrollmentId } = req.params;
+
+    const enrollment = await Enrollment.findById(enrollmentId)
+      .populate("course", "title price");
+
+    if (!enrollment) {
+      return res.status(404).json({ message: "Enrollment not found" });
+    }
+
+    if (enrollment.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    return res.status(200).json({
+      courseTitle: enrollment.course.title,
+      totalAmount: enrollment.totalAmount,
+      amountPaid: enrollment.totalPaid,
+      remainingAmount: enrollment.remainingAmount,
+      paymentPlan: enrollment.paymentPlan,
+      installmentStage: enrollment.installmentStage,
+      nextDueDate: enrollment.nextDueDate,
+      paymentStatus: enrollment.paymentStatus,
+      isBlocked: enrollment.isBlocked,
+    });
+
+  } catch (error) {
+    console.error("Payment status error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
