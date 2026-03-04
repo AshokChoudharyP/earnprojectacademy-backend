@@ -22,8 +22,9 @@ console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
  */
 router.post("/create-order", protect, async (req, res) => {
   try {
-    const { enrollmentId, plan, couponCode } = req.body;
-
+    const { enrollmentId, couponCode } = req.body;
+    const plan = req.body.plan?.toLowerCase();
+    console.log("PLAN RECEIVED:", plan);
     if (!enrollmentId || !plan) {
       return res.status(400).json({ message: "Invalid request" });
     }
