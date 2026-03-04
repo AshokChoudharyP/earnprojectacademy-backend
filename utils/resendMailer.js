@@ -1,9 +1,30 @@
 const { Resend } = require("resend");
+const fs = require("fs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const sendPaymentEmail = async ({ to, userName, courseTitle }) => {
+
+// ==============================
+// ✅ PAYMENT SUCCESS EMAIL
+// ==============================
+const sendPaymentEmail = async ({
+  to,
+  userName,
+  courseTitle,
+  invoicePath = null
+}) => {
   try {
+
+    let attachments = [];
+
+    // Attach invoice if available
+    if (invoicePath && fs.existsSync(invoicePath)) {
+      attachments.push({
+        filename: "invoice.pdf",
+        content: fs.readFileSync(invoicePath).toString("base64"),
+      });
+    }
+
     await resend.emails.send({
       from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
       to,
@@ -43,37 +64,63 @@ const sendPaymentEmail = async ({ to, userName, courseTitle }) => {
           </p>
         </div>
       `,
+      attachments,
     });
 
     console.log("✅ Payment email sent successfully");
+
   } catch (error) {
     console.error("❌ Payment email error:", error);
   }
 };
 
-async function sendPaymentReminderEmail({ to, userName, courseTitle, dueDate, amount }) {
-  const html = `
-  <h2>Payment Reminder</h2>
-  <p>Hello ${userName},</p>
 
-  <p>Your next installment payment is due soon.</p>
+// ==============================
+// 📧 PAYMENT REMINDER EMAIL
+// ==============================
+const sendPaymentReminderEmail = async ({
+  to,
+  userName,
+  courseTitle,
+  dueDate,
+  amount
+}) => {
+  try {
 
-  <b>Course:</b> ${courseTitle} <br/>
-  <b>Amount Due:</b> ₹${amount} <br/>
-  <b>Due Date:</b> ${new Date(dueDate).toDateString()}
+    const html = `
+      <h2>Payment Reminder</h2>
 
-  <p>Please complete payment to avoid course access suspension.</p>
+      <p>Hello ${userName},</p>
 
-  <br/>
+      <p>Your next installment payment is due soon.</p>
 
-  <b>EarnProjectAcademy</b>
-  `;
+      <b>Course:</b> ${courseTitle} <br/>
+      <b>Amount Due:</b> ₹${amount} <br/>
+      <b>Due Date:</b> ${new Date(dueDate).toDateString()}
 
-  await resend.emails.send({
-    from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
-    to,
-    subject: "Payment Reminder - EarnProjectAcademy",
-    html,
-  });
-}
-module.exports = { sendPaymentEmail, sendPaymentReminderEmail };
+      <p>Please complete payment to avoid course access suspension.</p>
+
+      <br/>
+
+      <b>EarnProjectAcademy</b>
+    `;
+
+    await resend.emails.send({
+      from: "EarnProjectAcademy <no-reply@earnprojectacademy.com>",
+      to,
+      subject: "Payment Reminder - EarnProjectAcademy",
+      html,
+    });
+
+    console.log("📧 Reminder email sent");
+
+  } catch (error) {
+    console.error("❌ Reminder email error:", error);
+  }
+};
+
+
+module.exports = {
+  sendPaymentEmail,
+  sendPaymentReminderEmail
+};

@@ -9,7 +9,7 @@ const { sendPaymentEmail } = require("../utils/resendMailer");
 const { protect } = require("../middleware/authMiddleware");
 const razorpay = require("../config/razorpay");
 const Enrollment = require("../models/Enrollment");
-
+const generateInvoice = require("../utils/generateInvoice");
 console.log("KEY:", process.env.RAZORPAY_KEY_ID);
 console.log("SECRET:", process.env.RAZORPAY_KEY_SECRET);
 
@@ -218,22 +218,39 @@ router.post("/verify", protect, async (req, res) => {
     // ======================================
     // 📧 SEND PAYMENT EMAIL
     // ======================================
-    const { sendPaymentEmail } = require("../utils/resendMailer");
-    const User = require("../models/User");
-    const Course = require("../models/Course");
+const { sendPaymentEmail } = require("../utils/resendMailer");
+const generateInvoice = require("../utils/generateInvoice");
 
-    const user = await User.findById(enrollment.user);
-    const course = await Course.findById(enrollment.course);
+const User = require("../models/User");
+const Course = require("../models/Course");
 
-    try {
-      await sendPaymentEmail({
-        to: user.email,
-        userName: user.name,
-        courseTitle: course.title,
-      });
-    } catch (emailError) {
-      console.error("❌ Email failed:", emailError.message);
-    }
+const user = await User.findById(enrollment.user);
+const course = await Course.findById(enrollment.course);
+
+try {
+
+  const invoicePath = await generateInvoice({
+    userName: user.name,
+    email: user.email,
+    courseTitle: course.title,
+    amount: enrollment.totalPaid,
+    paymentId: razorpay_payment_id
+  });
+
+  await sendPaymentEmail({
+    to: user.email,
+    userName: user.name,
+    courseTitle: course.title,
+    invoicePath
+  });
+
+  console.log("📧 Payment email + invoice sent");
+
+} catch (emailError) {
+
+  console.error("❌ Email failed:", emailError.message);
+
+}
 
     return res.status(200).json({
       message: "Payment verified successfully",
@@ -241,9 +258,15 @@ router.post("/verify", protect, async (req, res) => {
     });
 
   } catch (error) {
+
     console.error("❌ Payment verification error:", error);
-    return res.status(500).json({ message: "Payment verification failed" });
+
+    return res.status(500).json({
+      message: "Payment verification failed"
+    });
+
   }
+
 });
 
 router.get("/test-razorpay", async (req, res) => {
